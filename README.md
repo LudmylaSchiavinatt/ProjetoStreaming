@@ -3,7 +3,8 @@
 Bem-vindo ao meu sistema de streaming!!! Esse projeto é um gerenciador de filmes feito totalmente em C. A grande sacada aqui não é uma interface bonitinha, mas sim a manipulação direta no disco.
 Chega de arrays gigantes comendo toda a sua memória RAM. O sistema lê, escreve e atualiza os bytes direto no arquivo físico .dat
 
-Quais são suas funcionalidades?????????????///
+Quais são suas funcionalidades?????????????
+
 [C]reate: Cadastra seus filmes. Dá para colocar de tudo, desde um mistério denso na vibe Agatha Christie até uma comédia farofa do Adam Sandler.
 
 [R]ead: Busca o filme pelo ID. Achou? Ele te mostra tudo: diretor, ano, duração, nota e gênero.
