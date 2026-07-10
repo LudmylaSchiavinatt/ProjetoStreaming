@@ -1,24 +1,24 @@
+
 #ifndef INDICE_H
 #define INDICE_H
 
 #include "filme.h"
 #include <stdio.h>
 
-// estruturas para indice secundario
-// Nó da lista invertida (encadeamento no arquivo)
+// Estrutura do nó da lista invertida
 typedef struct {
-    int idFilme;           // ID do filme (chave primária)
-    long proximo;          // Offset do próximo nó (-1 se for o último)
+    int idFilme;
+    long proximo;
 } NoListaInvertida;
 
-// Entrada do índice secundário
+// Estrutura da entrada do índice
 typedef struct {
-    char chave[60];        // Gênero ou Diretor (chave secundária)
-    long primeiro;         // Offset do primeiro nó da lista invertida
-    long proximo;          // Para encadeamento no índice (caso precise)
+    char chave[60];
+    long primeiro;
 } IndiceSecundario;
 
-// funções para o índice por gênero
+
+// funções do índice por gênero
 // Inicializa o arquivo de índice de gênero
 void inicializar_indice_genero();
 
@@ -32,8 +32,7 @@ void remover_indice_genero(int idFilme);
 void buscar_por_genero(const char *genero);
 
 
-
-//funções para o índice por diretor
+//funções do índice por diretor
 // Inicializa o arquivo de índice de diretor
 void inicializar_indice_diretor();
 
@@ -46,11 +45,14 @@ void remover_indice_diretor(int idFilme);
 // Busca todos os filmes de um determinado diretor
 void buscar_por_diretor(const char *diretor);
 
-// função auxiliar
+//funções auxiliares
 // Atualiza os índices quando um filme é atualizado
 void atualizar_indices(Filme filme_antigo, Filme filme_novo);
 
 // Remove um filme de todos os índices
 void remover_de_todos_indices(int idFilme);
+
+// Fecha os arquivos de índice
+void fechar_indices();
 
 #endif
