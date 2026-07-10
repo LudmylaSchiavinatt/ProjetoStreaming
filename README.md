@@ -1,6 +1,6 @@
 # Sistema de Streaming KERNELPOP de Manipulação Direta NO DISCO :movie_camera: :computer: 📺 🐧
 
-Bem-vindo ao istema de streaming KernelPop!!! Esse projeto é um gerenciador de filmes feito totalmente em C. A grande sacada aqui não é uma interface bonitinha, mas sim a manipulação direta no disco.
+Bem-vindo ao sistema de streaming KernelPop!!! Esse projeto é um gerenciador de filmes feito totalmente em C. A grande sacada aqui é manipulação direta no disco.
 Chega de arrays gigantes comendo toda a sua memória RAM. O sistema lê, escreve e atualiza os bytes direto no arquivo físico .dat
 
 Quais são suas funcionalidades?????????????
