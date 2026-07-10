@@ -110,20 +110,20 @@ int main() {
                 }
                 break;
             }
-            case 4: { // DELETE
+            case 4: {
                 int id;
                 printf("\nDigite o ID do filme que deseja REMOVER: ");
                 scanf("%d", &id); getchar();
 
                 if (remover_filme(arq, id)) {
-                    printf("\n>> Filme removido logicamente (Flag LED alterada).\n");
+                    printf("\n>> Filme removido.\n");
                 } else {
                     printf("\n>> Erro: Filme nao encontrado.\n");
                 }
                 break;
             }
             case 5:
-                printf("\nFechando sistema de streaming...\n");
+                printf("\nFechando sistema de streaming.\n");
                 break;
             default:
                 printf("\nOpcao invalida! Tente novamente.\n");
