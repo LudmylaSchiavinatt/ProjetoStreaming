@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "filme.h"
+#include "indice.h"  
 
 // auxiliar pra remover /n
 void limpar_linha(char *str) {
@@ -16,7 +17,9 @@ void exibir_menu() {
     printf("2. Buscar Filme por ID (Read)\n");
     printf("3. Atualizar Filme (Update)\n");
     printf("4. Remover Filme (Delete - Logico)\n");
-    printf("5. Sair\n");
+    printf("5. Buscar por Genero (Indice Secundario)\n");
+    printf("6. Buscar por Diretor (Indice Secundario)\n");
+    printf("7. Sair\n");
     printf("Escolha:");
 }
 
@@ -27,9 +30,13 @@ int main() {
         return 1;
     }
 
+    //inicializa os indices secundarios
+    inicializar_indice_genero();
+    inicializar_indice_diretor();
+    
     int opcao = 0;
 
-    while (opcao != 5) {
+    while (opcao != 7) {  // MUDOU - agora sai com 7
         exibir_menu();
         if (scanf("%d", &opcao) != 1) {
             printf("Entrada invalida.\n");
@@ -38,7 +45,7 @@ int main() {
         getchar(); // Limpa o buffer do teclado para os próximos inputs de texto
 
         switch (opcao) {
-       case 1: { // CREATE
+            case 1: { // CREATE
                 Filme f;
                 printf("\n--- INSERIR NOVO FILME ---\n");
                 printf("ID (Inteiro): "); scanf("%d", &f.id); getchar();
@@ -46,11 +53,9 @@ int main() {
                 // --- NOVA VERIFICAÇÃO DE CHAVE PRIMÁRIA ---
                 Filme existente = buscar_filme(arq, f.id);
                 if (existente.id != -1) {
-                    // Se o ID retornado não for -1, significa que o filme já existe e está ativo.
                     printf("\n>> Erro: O ID %d ja esta cadastrado no sistema! A Chave Primaria deve ser unica.\n", f.id);
-                    break; // Sai do 'case 1' e volta para o menu principal
+                    break;
                 }
-                // ------------------------------------------
 
                 printf("Titulo: "); fgets(f.titulo, 100, stdin); limpar_linha(f.titulo);
                 printf("Diretor: "); fgets(f.diretor, 60, stdin); limpar_linha(f.diretor);
@@ -62,12 +67,16 @@ int main() {
 
                 inserir_filme(arq, f);
                 
-                //força a gravação no disco
+                //insere nos indice secundarios
+                inserir_indice_genero(f);
+                inserir_indice_diretor(f);
+                
                 fflush(arq); 
 
                 printf("\n>> Filme gravado com sucesso no disco!\n");
                 break;
             }
+            
             case 2: { // leitura do registro
                 int id;
                 printf("\nDigite o ID do filme que deseja: ");
@@ -75,7 +84,7 @@ int main() {
 
                 Filme f = buscar_filme(arq, id);
                 if (f.id != -1) {
-                    printf("\n** O filme foi encotnrado !!**\n");
+                    printf("\n** O filme foi encontrado !!**\n");
                     printf("ID: %d\nTitulo: %s\nDiretor: %s\nAno: %d\nGenero: %s\nDuracao: %d min\nClassificacao: %s\nNota: %.1f\n", 
                            f.id, f.titulo, f.diretor, f.ano, f.genero, f.duracao, f.classificacao, f.nota);
                 } else {
@@ -83,10 +92,11 @@ int main() {
                 }
                 break;
             }
+            
             case 3: { // UPDATE
                 int id;
                 Filme novos_dados;
-                printf("\nDigite o id do filme que vc deseja atualizar  ");
+                printf("\nDigite o id do filme que vc deseja atualizar: ");
                 scanf("%d", &id); getchar();
 
                 // Verifica primeiro se o filme existe
@@ -96,7 +106,7 @@ int main() {
                     break;
                 }
 
-                printf("\n atualizando os dados...\n", id);
+                printf("\nAtualizando os dados do filme ID %d:\n", id);
                 printf("Novo Titulo: "); fgets(novos_dados.titulo, 100, stdin); limpar_linha(novos_dados.titulo);
                 printf("Novo Diretor: "); fgets(novos_dados.diretor, 60, stdin); limpar_linha(novos_dados.diretor);
                 printf("Novo Ano: "); scanf("%d", &novos_dados.ano); getchar();
@@ -104,32 +114,65 @@ int main() {
                 printf("Nova Duracao (min): "); scanf("%d", &novos_dados.duracao); getchar();
                 printf("Nova Classificacao: "); fgets(novos_dados.classificacao, 5, stdin); limpar_linha(novos_dados.classificacao);
                 printf("Nova Nota: "); scanf("%f", &novos_dados.nota); getchar();
-
+                //atualiza indice secundarios
                 if (atualizar_filme(arq, id, novos_dados)) {
+                    atualizar_indices(existente, novos_dados);
                     printf("\n>> Registro atualizado com sucesso no disco!\n");
                 }
                 break;
             }
-            case 4: {
+            
+            case 4: { // DELETE
                 int id;
                 printf("\nDigite o ID do filme que deseja REMOVER: ");
                 scanf("%d", &id); getchar();
 
+                //remove dos indice secundarios
                 if (remover_filme(arq, id)) {
+                    remover_de_todos_indices(id);
                     printf("\n>> Filme removido.\n");
                 } else {
                     printf("\n>> Erro: Filme nao encontrado.\n");
                 }
                 break;
             }
-            case 5:
+            
+            //Case 5 buscar por gênero
+            case 5: {
+                char genero[60];
+                printf("\n--- BUSCAR POR GENERO ---\n");
+                printf("Digite o genero: ");
+                fgets(genero, 60, stdin);
+                limpar_linha(genero);
+                
+                buscar_por_genero(genero);
+                break;
+            }
+            
+            //Case 6 buscar por diretor
+            case 6: {
+                char diretor[60];
+                printf("\n--- BUSCAR POR DIRETOR ---\n");
+                printf("Digite o nome do diretor: ");
+                fgets(diretor, 60, stdin);
+                limpar_linha(diretor);
+                
+                buscar_por_diretor(diretor);
+                break;
+            }
+            
+            case 7: // SAIR (era 5, virou 7)
                 printf("\nFechando sistema de streaming.\n");
                 break;
+                
             default:
                 printf("\nOpcao invalida! Tente novamente.\n");
         }
     }
 
+    //fecha os indice secundarios
+    fechar_indices();
+    
     fechar_arquivo(arq);
     return 0;
 }
