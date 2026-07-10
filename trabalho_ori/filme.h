@@ -13,7 +13,7 @@ typedef struct {
     int duracao;
     char classificacao[5];
     float nota;
-    char removido;       // '0' para ativo, '1' para removido
+    char removido;       //  0 para ativo, 1 removido
     long prox_livre;     // Guarda o offset do próximo espaço vazio na LED (-1 se fim da lista)
 } Filme;
 
