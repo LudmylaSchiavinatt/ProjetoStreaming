@@ -3,6 +3,7 @@
 #include <string.h>
 #include "filme.h"
 #include "indice.h"  
+#include "arvoreb.h" // <<< 1. ADICIONE ESTA INCLUSÃO
 
 // auxiliar pra remover /n
 void limpar_linha(char *str) {
@@ -24,9 +25,13 @@ void exibir_menu() {
 }
 
 int main() {
+    // <<< 2. INICIALIZE A ÁRVORE B LOGO NO INÍCIO
+    inicializar_arvore_b();
+
     FILE* arq = abrir_arquivo("dados_filmes.dat");
     if (arq == NULL) {
         printf("Erro fatal ao abrir o arquivo de dados.\n");
+        fechar_arvore_b(); // Garante o fechamento correto caso falhe
         return 1;
     }
 
@@ -36,13 +41,13 @@ int main() {
     
     int opcao = 0;
 
-    while (opcao != 7) {  // MUDOU - agora sai com 7
+    while (opcao != 7) {  
         exibir_menu();
         if (scanf("%d", &opcao) != 1) {
             printf("Entrada invalida.\n");
             break;
         }
-        getchar(); // Limpa o buffer do teclado para os próximos inputs de texto
+        getchar(); 
 
         switch (opcao) {
             case 1: { // CREATE
@@ -50,7 +55,6 @@ int main() {
                 printf("\n--- INSERIR NOVO FILME ---\n");
                 printf("ID (Inteiro): "); scanf("%d", &f.id); getchar();
 
-                // --- NOVA VERIFICAÇÃO DE CHAVE PRIMÁRIA ---
                 Filme existente = buscar_filme(arq, f.id);
                 if (existente.id != -1) {
                     printf("\n>> Erro: O ID %d ja esta cadastrado no sistema! A Chave Primaria deve ser unica.\n", f.id);
@@ -67,7 +71,6 @@ int main() {
 
                 inserir_filme(arq, f);
                 
-                //insere nos indice secundarios
                 inserir_indice_genero(f);
                 inserir_indice_diretor(f);
                 
@@ -99,7 +102,6 @@ int main() {
                 printf("\nDigite o id do filme que vc deseja atualizar: ");
                 scanf("%d", &id); getchar();
 
-                // Verifica primeiro se o filme existe
                 Filme existente = buscar_filme(arq, id);
                 if (existente.id == -1) {
                     printf("\n>> Erro: Filme nao encontrado \n");
@@ -114,10 +116,10 @@ int main() {
                 printf("Nova Duracao (min): "); scanf("%d", &novos_dados.duracao); getchar();
                 printf("Nova Classificacao: "); fgets(novos_dados.classificacao, 5, stdin); limpar_linha(novos_dados.classificacao);
                 printf("Nova Nota: "); scanf("%f", &novos_dados.nota); getchar();
-                //atualiza indice secundarios
+
                 if (atualizar_filme(arq, id, novos_dados)) {
                     atualizar_indices(existente, novos_dados);
-                    printf("\n>> Registro atualizado com sucesso no disco!\n");
+                    printf("\n>> Registro updated com sucesso no disco!\n");
                 }
                 break;
             }
@@ -127,7 +129,6 @@ int main() {
                 printf("\nDigite o ID do filme que deseja REMOVER: ");
                 scanf("%d", &id); getchar();
 
-                //remove dos indice secundarios
                 if (remover_filme(arq, id)) {
                     remover_de_todos_indices(id);
                     printf("\n>> Filme removido.\n");
@@ -137,7 +138,6 @@ int main() {
                 break;
             }
             
-            //Case 5 buscar por gênero
             case 5: {
                 char genero[60];
                 printf("\n--- BUSCAR POR GENERO ---\n");
@@ -149,7 +149,6 @@ int main() {
                 break;
             }
             
-            //Case 6 buscar por diretor
             case 6: {
                 char diretor[60];
                 printf("\n--- BUSCAR POR DIRETOR ---\n");
@@ -161,7 +160,7 @@ int main() {
                 break;
             }
             
-            case 7: // SAIR (era 5, virou 7)
+            case 7: 
                 printf("\nFechando sistema de streaming.\n");
                 break;
                 
@@ -173,6 +172,9 @@ int main() {
     //fecha os indice secundarios
     fechar_indices();
     
+    // <<< 3. FECHE A ÁRVORE B ANTES DE TERMINAR
+    fechar_arvore_b();
+
     fechar_arquivo(arq);
     return 0;
 }
