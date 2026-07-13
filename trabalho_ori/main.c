@@ -3,7 +3,7 @@
 #include <string.h>
 #include "filme.h"
 #include "indice.h"  
-#include "arvoreb.h" // <<< 1. ADICIONE ESTA INCLUSÃO
+#include "arvoreb.h"
 
 // auxiliar pra remover /n
 void limpar_linha(char *str) {
@@ -25,7 +25,7 @@ void exibir_menu() {
 }
 
 int main() {
-    // <<< 2. INICIALIZE A ÁRVORE B LOGO NO INÍCIO
+   
     inicializar_arvore_b();
 
     FILE* arq = abrir_arquivo("dados_filmes.dat");
