@@ -3,7 +3,7 @@
 #include <string.h>
 #include "filme.h"
 #include "indice.h"  
-#include "arvoreb.h"
+#include "arvore_b.h"
 
 // Remove \n e \r para garantir o correto funcionamento das buscas textuais no Windows
 void limpar_linha(char *str) {
