@@ -1,355 +1,515 @@
 #include "indice.h"
 #include "filme.h"
+
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 
-//constantes
-#define NOME_INDICE_GENERO "indice_genero.dat"
-#define NOME_INDICE_DIRETOR "indice_diretor.dat"
+#define ARQ_INDICE_GENERO  "indice_genero.dat"
+#define ARQ_LISTA_GENERO   "lista_genero.dat"
 
-// variáveis globais
-static FILE* arquivo_indice_genero = NULL;
-static FILE* arquivo_indice_diretor = NULL;
+#define ARQ_INDICE_DIRETOR "indice_diretor.dat"
+#define ARQ_LISTA_DIRETOR  "lista_diretor.dat"
 
-//funções auxiliares
-// Converte uma string para minúsculo (função caseira)
+static FILE *indice_genero = NULL;
+static FILE *lista_genero = NULL;
+
+static FILE *indice_diretor = NULL;
+static FILE *lista_diretor = NULL;
+
+
+//AUXILIARES                                              
+
 static void para_minusculo(char *str) {
     int i;
-    for (i = 0; str[i] != '\0'; i++) {
-        if (str[i] >= 'A' && str[i] <= 'Z') {
-            str[i] = str[i] + 32;  // 'A' (65) vira 'a' (97)
-        }
+
+    for(i = 0; str[i] != '\0'; i++) {
+        if(str[i] >= 'A' && str[i] <= 'Z')
+            str[i] += 32;
     }
 }
 
-// Compara duas strings ignorando maiúsculas/minúsculas
-static int comparar_sem_case(const char *str1, const char *str2) {
-    int i = 0;
-    
-    while (str1[i] != '\0' && str2[i] != '\0') {
-        char c1 = str1[i];
-        char c2 = str2[i];
-        
-        // Converte temporariamente para minúsculo
-        if (c1 >= 'A' && c1 <= 'Z') c1 = c1 + 32;
-        if (c2 >= 'A' && c2 <= 'Z') c2 = c2 + 32;
-        
-        if (c1 != c2) {
+static int comparar_sem_case(const char *a, const char *b) {
+
+    while(*a && *b) {
+
+        char c1 = *a;
+        char c2 = *b;
+
+        if(c1 >= 'A' && c1 <= 'Z') c1 += 32;
+        if(c2 >= 'A' && c2 <= 'Z') c2 += 32;
+
+        if(c1 != c2)
             return c1 - c2;
-        }
-        i++;
+
+        a++;
+        b++;
     }
-    
-    return str1[i] - str2[i];
+
+    return *a - *b;
 }
 
-// Abre ou cria um arquivo de índice
-static FILE* abrir_arquivo_indice(const char* nome) {
-    FILE* arq = fopen(nome, "rb+");
-    
-    if (arq == NULL) {
-        arq = fopen(nome, "wb+");
-        if (arq != NULL) {
-            long cabeca = -1;
-            fwrite(&cabeca, sizeof(long), 1, arq);
-            fflush(arq);
-        }
-    }
-    
-    return arq;
+static FILE *abrir_indice(const char *nome) {
+
+    FILE *f = fopen(nome, "rb+");
+
+    if(f == NULL)
+        f = fopen(nome, "wb+");
+
+    return f;
 }
 
-// Busca uma chave no arquivo de índice (compara sem case)
-static long buscar_chave_indice(FILE* arq, const char* chave) {
+static long buscar_chave(FILE *indice, const char *chave) {
+
     IndiceSecundario entrada;
-    long offset = sizeof(long);
-    
-    fseek(arq, offset, SEEK_SET);
-    
-    while (fread(&entrada, sizeof(IndiceSecundario), 1, arq) == 1) {
-        // Usa comparação sem case
-        // Compara sem converter a string original
-        if (comparar_sem_case(entrada.chave, chave) == 0) {
-            return offset;
-        }
-        offset = ftell(arq);
+
+    rewind(indice);
+
+    while(fread(&entrada,
+                sizeof(IndiceSecundario),
+                1,
+                indice) == 1) {
+
+        if(comparar_sem_case(entrada.chave, chave) == 0)
+            return ftell(indice) - sizeof(IndiceSecundario);
     }
-    
+
     return -1;
 }
 
-// Insere uma nova chave no índice
-static void inserir_chave_indice(FILE* arq, const char* chave, int idFilme) {
-    long offset_chave = buscar_chave_indice(arq, chave);
+static void inserir_chave(
+        FILE *indice,
+        FILE *lista,
+        const char *chave,
+        int idFilme) {
+
     char chave_normalizada[60];
-    
-    // Copia a chave e normaliza (converte para minúsculo)
+
     strcpy(chave_normalizada, chave);
-    //Converte string inteira
     para_minusculo(chave_normalizada);
-    
-    if (offset_chave != -1) {
-        // Chave já existe
+
+    long offset_chave = buscar_chave(
+            indice,
+            chave_normalizada);
+
+    if(offset_chave != -1) {
+
         IndiceSecundario entrada;
-        fseek(arq, offset_chave, SEEK_SET);
-        fread(&entrada, sizeof(IndiceSecundario), 1, arq);
-        
-        NoListaInvertida novo_no;
-        novo_no.idFilme = idFilme;
-        novo_no.proximo = entrada.primeiro;
-        
-        fseek(arq, 0, SEEK_END);
-        long offset_no = ftell(arq);
-        fwrite(&novo_no, sizeof(NoListaInvertida), 1, arq);
-        
+
+        fseek(indice, offset_chave, SEEK_SET);
+        fread(&entrada,
+              sizeof(IndiceSecundario),
+              1,
+              indice);
+
+        NoListaInvertida novo;
+
+        novo.idFilme = idFilme;
+        novo.proximo = entrada.primeiro;
+
+        fseek(lista,0,SEEK_END);
+
+        long offset_no = ftell(lista);
+
+        fwrite(&novo,
+               sizeof(NoListaInvertida),
+               1,
+               lista);
+
         entrada.primeiro = offset_no;
-        fseek(arq, offset_chave, SEEK_SET);
-        fwrite(&entrada, sizeof(IndiceSecundario), 1, arq);
-        
-        fflush(arq);
+
+        fseek(indice, offset_chave, SEEK_SET);
+
+        fwrite(&entrada,
+               sizeof(IndiceSecundario),
+               1,
+               indice);
+
+        fflush(indice);
+        fflush(lista);
+
         return;
     }
-    
-    // Chave nova
-    IndiceSecundario nova_entrada;
-    strcpy(nova_entrada.chave, chave_normalizada);
-    
-    NoListaInvertida novo_no;
-    novo_no.idFilme = idFilme;
-    novo_no.proximo = -1;
-    
-    fseek(arq, 0, SEEK_END);
-    long offset_no = ftell(arq);
-    fwrite(&novo_no, sizeof(NoListaInvertida), 1, arq);
-    
-    nova_entrada.primeiro = offset_no;
-    
-    fseek(arq, 0, SEEK_END);
-    fwrite(&nova_entrada, sizeof(IndiceSecundario), 1, arq);
-    
-    fflush(arq);
+
+    NoListaInvertida novo;
+
+    novo.idFilme = idFilme;
+    novo.proximo = -1;
+
+    fseek(lista,0,SEEK_END);
+
+    long offset_no = ftell(lista);
+
+    fwrite(&novo,
+           sizeof(NoListaInvertida),
+           1,
+           lista);
+
+    IndiceSecundario entrada;
+
+    strcpy(entrada.chave,
+           chave_normalizada);
+
+    entrada.primeiro = offset_no;
+
+    fseek(indice,0,SEEK_END);
+
+    fwrite(&entrada,
+           sizeof(IndiceSecundario),
+           1,
+           indice);
+
+    fflush(indice);
+    fflush(lista);
 }
 
-// Remove um ID da lista invertida
-static void remover_id_da_chave(FILE* arq, const char* chave, int idFilme) {
-    long offset_chave = buscar_chave_indice(arq, chave);
-    
-    if (offset_chave == -1) {
+static void remover_id(
+        FILE *indice,
+        FILE *lista,
+        const char *chave,
+        int idFilme) {
+
+    long offset_chave =
+        buscar_chave(indice, chave);
+
+    if(offset_chave == -1)
         return;
-    }
-    
+
     IndiceSecundario entrada;
-    fseek(arq, offset_chave, SEEK_SET);
-    fread(&entrada, sizeof(IndiceSecundario), 1, arq);
-    
+
+    fseek(indice,
+          offset_chave,
+          SEEK_SET);
+
+    fread(&entrada,
+          sizeof(IndiceSecundario),
+          1,
+          indice);
+
     long atual = entrada.primeiro;
     long anterior = -1;
-    
-    while (atual != -1) {
+
+    while(atual != -1) {
+
         NoListaInvertida no;
-        fseek(arq, atual, SEEK_SET);
-        fread(&no, sizeof(NoListaInvertida), 1, arq);
-        
-        if (no.idFilme == idFilme) {
-            if (anterior == -1) {
+
+        fseek(lista, atual, SEEK_SET);
+
+        fread(&no,
+              sizeof(NoListaInvertida),
+              1,
+              lista);
+
+        if(no.idFilme == idFilme) {
+
+            if(anterior == -1) {
+
                 entrada.primeiro = no.proximo;
-                fseek(arq, offset_chave, SEEK_SET);
-                fwrite(&entrada, sizeof(IndiceSecundario), 1, arq);
-            } else {
-                NoListaInvertida no_anterior;
-                fseek(arq, anterior, SEEK_SET);
-                fread(&no_anterior, sizeof(NoListaInvertida), 1, arq);
-                no_anterior.proximo = no.proximo;
-                fseek(arq, anterior, SEEK_SET);
-                fwrite(&no_anterior, sizeof(NoListaInvertida), 1, arq);
+
+                fseek(indice,
+                      offset_chave,
+                      SEEK_SET);
+
+                fwrite(&entrada,
+                       sizeof(IndiceSecundario),
+                       1,
+                       indice);
             }
-            
-            fflush(arq);
+            else {
+
+                NoListaInvertida ant;
+
+                fseek(lista,
+                      anterior,
+                      SEEK_SET);
+
+                fread(&ant,
+                      sizeof(NoListaInvertida),
+                      1,
+                      lista);
+
+                ant.proximo = no.proximo;
+
+                fseek(lista,
+                      anterior,
+                      SEEK_SET);
+
+                fwrite(&ant,
+                       sizeof(NoListaInvertida),
+                       1,
+                       lista);
+            }
+
+            fflush(indice);
+            fflush(lista);
+
             return;
         }
-        
+
         anterior = atual;
         atual = no.proximo;
     }
 }
 
-//implementação do indice por gênero
+// GÊNERO                                                   
+
 void inicializar_indice_genero() {
-    if (arquivo_indice_genero == NULL) {
-        arquivo_indice_genero = abrir_arquivo_indice(NOME_INDICE_GENERO);
-    }
+
+    if(indice_genero == NULL)
+        indice_genero =
+            abrir_indice(ARQ_INDICE_GENERO);
+
+    if(lista_genero == NULL)
+        lista_genero =
+            abrir_indice(ARQ_LISTA_GENERO);
 }
 
 void inserir_indice_genero(Filme filme) {
-    if (arquivo_indice_genero == NULL) {
-        inicializar_indice_genero();
-    }
-    
-    // Usa o gênero diretamente (a função inserir_chave_indice já normaliza)
-    inserir_chave_indice(arquivo_indice_genero, filme.genero, filme.id);
+
+    inicializar_indice_genero();
+
+    inserir_chave(
+        indice_genero,
+        lista_genero,
+        filme.genero,
+        filme.id);
 }
 
 void remover_indice_genero(int idFilme) {
-    FILE* arq_dados = abrir_arquivo("dados_filmes.dat");
-    if (arq_dados == NULL) return;
-    
-    Filme f = buscar_filme(arq_dados, idFilme);
-    fechar_arquivo(arq_dados);
-    
-    if (f.id == -1) return;
-    
-    remover_id_da_chave(arquivo_indice_genero, f.genero, idFilme);
+
+    FILE *dados =
+        abrir_arquivo("dados_filmes.dat");
+
+    Filme f =
+        buscar_filme(dados,idFilme);
+
+    fechar_arquivo(dados);
+
+    if(f.id == -1)
+        return;
+
+    remover_id(
+        indice_genero,
+        lista_genero,
+        f.genero,
+        idFilme);
 }
 
 void buscar_por_genero(const char *genero) {
-    if (arquivo_indice_genero == NULL) {
-        inicializar_indice_genero();
-    }
-    
-    // Busca a chave (já faz comparação sem case)
-    long offset_chave = buscar_chave_indice(arquivo_indice_genero, genero);
-    
-    if (offset_chave == -1) {
-        printf("\n>>> Nenhum filme encontrado para o genero: %s\n", genero);
+
+    inicializar_indice_genero();
+
+    long offset =
+        buscar_chave(
+            indice_genero,
+            genero);
+
+    if(offset == -1) {
+
+        printf("\nNenhum filme encontrado.\n");
         return;
     }
-    
+
     IndiceSecundario entrada;
-    fseek(arquivo_indice_genero, offset_chave, SEEK_SET);
-    fread(&entrada, sizeof(IndiceSecundario), 1, arquivo_indice_genero);
-    
-    FILE* arq_dados = abrir_arquivo("dados_filmes.dat");
-    if (arq_dados == NULL) return;
-    
-    printf("\n=== FILMES DO GENERO: %s ===\n", genero);
-    printf("----------------------------------------\n");
-    
+
+    fseek(indice_genero,
+          offset,
+          SEEK_SET);
+
+    fread(&entrada,
+          sizeof(IndiceSecundario),
+          1,
+          indice_genero);
+
+    FILE *dados =
+        abrir_arquivo("dados_filmes.dat");
+
     long atual = entrada.primeiro;
-    int contador = 0;
-    
-    while (atual != -1) {
+
+    while(atual != -1) {
+
         NoListaInvertida no;
-        fseek(arquivo_indice_genero, atual, SEEK_SET);
-        fread(&no, sizeof(NoListaInvertida), 1, arquivo_indice_genero);
-        
-        Filme f = buscar_filme(arq_dados, no.idFilme);
-        if (f.id != -1) {
-            printf("ID: %d | Titulo: %s | Diretor: %s | Ano: %d\n", 
-                   f.id, f.titulo, f.diretor, f.ano);
-            contador++;
+
+        fseek(lista_genero,
+              atual,
+              SEEK_SET);
+
+        fread(&no,
+              sizeof(NoListaInvertida),
+              1,
+              lista_genero);
+
+        Filme f =
+            buscar_filme(
+                dados,
+                no.idFilme);
+
+        if(f.id != -1) {
+            printf("\nID: %d",f.id);
+            printf("\nTitulo: %s",f.titulo);
+            printf("\nDiretor: %s",f.diretor);
+            printf("\nAno: %d\n",f.ano);
         }
-        
+
         atual = no.proximo;
     }
-    
-    printf("----------------------------------------\n");
-    printf("Total: %d filme(s) encontrado(s)\n", contador);
-    
-    fechar_arquivo(arq_dados);
+
+    fechar_arquivo(dados);
 }
 
-//implementação do indice por diretor
+// DIRETOR                                                  
+
 void inicializar_indice_diretor() {
-    if (arquivo_indice_diretor == NULL) {
-        arquivo_indice_diretor = abrir_arquivo_indice(NOME_INDICE_DIRETOR);
-    }
+
+    if(indice_diretor == NULL)
+        indice_diretor =
+            abrir_indice(ARQ_INDICE_DIRETOR);
+
+    if(lista_diretor == NULL)
+        lista_diretor =
+            abrir_indice(ARQ_LISTA_DIRETOR);
 }
 
 void inserir_indice_diretor(Filme filme) {
-    if (arquivo_indice_diretor == NULL) {
-        inicializar_indice_diretor();
-    }
-    
-    inserir_chave_indice(arquivo_indice_diretor, filme.diretor, filme.id);
+
+    inicializar_indice_diretor();
+
+    inserir_chave(
+        indice_diretor,
+        lista_diretor,
+        filme.diretor,
+        filme.id);
 }
 
 void remover_indice_diretor(int idFilme) {
-    FILE* arq_dados = abrir_arquivo("dados_filmes.dat");
-    if (arq_dados == NULL) return;
-    
-    Filme f = buscar_filme(arq_dados, idFilme);
-    fechar_arquivo(arq_dados);
-    
-    if (f.id == -1) return;
-    
-    remover_id_da_chave(arquivo_indice_diretor, f.diretor, idFilme);
+
+    FILE *dados =
+        abrir_arquivo("dados_filmes.dat");
+
+    Filme f =
+        buscar_filme(dados,idFilme);
+
+    fechar_arquivo(dados);
+
+    if(f.id == -1)
+        return;
+
+    remover_id(
+        indice_diretor,
+        lista_diretor,
+        f.diretor,
+        idFilme);
 }
 
 void buscar_por_diretor(const char *diretor) {
-    if (arquivo_indice_diretor == NULL) {
-        inicializar_indice_diretor();
-    }
-    
-    long offset_chave = buscar_chave_indice(arquivo_indice_diretor, diretor);
-    
-    if (offset_chave == -1) {
-        printf("\n>>> Nenhum filme encontrado para o diretor: %s\n", diretor);
+
+    inicializar_indice_diretor();
+
+    long offset =
+        buscar_chave(
+            indice_diretor,
+            diretor);
+
+    if(offset == -1) {
+
+        printf("\nNenhum filme encontrado.\n");
         return;
     }
-    
+
     IndiceSecundario entrada;
-    fseek(arquivo_indice_diretor, offset_chave, SEEK_SET);
-    fread(&entrada, sizeof(IndiceSecundario), 1, arquivo_indice_diretor);
-    
-    FILE* arq_dados = abrir_arquivo("dados_filmes.dat");
-    if (arq_dados == NULL) return;
-    
-    printf("\n=== FILMES DO DIRETOR: %s ===\n", diretor);
-    printf("----------------------------------------\n");
-    
+
+    fseek(indice_diretor,
+          offset,
+          SEEK_SET);
+
+    fread(&entrada,
+          sizeof(IndiceSecundario),
+          1,
+          indice_diretor);
+
+    FILE *dados =
+        abrir_arquivo("dados_filmes.dat");
+
     long atual = entrada.primeiro;
-    int contador = 0;
-    
-    while (atual != -1) {
+
+    while(atual != -1) {
+
         NoListaInvertida no;
-        fseek(arquivo_indice_diretor, atual, SEEK_SET);
-        fread(&no, sizeof(NoListaInvertida), 1, arquivo_indice_diretor);
-        
-        Filme f = buscar_filme(arq_dados, no.idFilme);
-        if (f.id != -1) {
-            printf("ID: %d | Titulo: %s | Genero: %s | Ano: %d\n", 
-                   f.id, f.titulo, f.genero, f.ano);
-            contador++;
+
+        fseek(lista_diretor,
+              atual,
+              SEEK_SET);
+
+        fread(&no,
+              sizeof(NoListaInvertida),
+              1,
+              lista_diretor);
+
+        Filme f =
+            buscar_filme(
+                dados,
+                no.idFilme);
+
+        if(f.id != -1) {
+            printf("\nID: %d",f.id);
+            printf("\nTitulo: %s",f.titulo);
+            printf("\nGenero: %s",f.genero);
+            printf("\nAno: %d\n",f.ano);
         }
-        
+
         atual = no.proximo;
     }
-    
-    printf("----------------------------------------\n");
-    printf("Total: %d filme(s) encontrado(s)\n", contador);
-    
-    fechar_arquivo(arq_dados);
+
+    fechar_arquivo(dados);
 }
 
-//funções de manutenção
-void atualizar_indices(Filme filme_antigo, Filme filme_novo) {
-    // Se o gênero mudou
-    if (comparar_sem_case(filme_antigo.genero, filme_novo.genero) != 0) {
-        remover_indice_genero(filme_antigo.id);
-        inserir_indice_genero(filme_novo);
+// MANUTENÇÃO                                               
+
+void atualizar_indices(Filme antigo,
+                        Filme novo) {
+
+    novo.id = antigo.id;
+
+    if(comparar_sem_case(
+            antigo.genero,
+            novo.genero) != 0) {
+
+        remover_indice_genero(
+            antigo.id);
+
+        inserir_indice_genero(
+            novo);
     }
-    
-    // Se o diretor mudou
-    if (comparar_sem_case(filme_antigo.diretor, filme_novo.diretor) != 0) {
-        remover_indice_diretor(filme_antigo.id);
-        inserir_indice_diretor(filme_novo);
+
+    if(comparar_sem_case(
+            antigo.diretor,
+            novo.diretor) != 0) {
+
+        remover_indice_diretor(
+            antigo.id);
+
+        inserir_indice_diretor(
+            novo);
     }
 }
 
-void remover_de_todos_indices(int idFilme) {
+void remover_de_todos_indices(
+        int idFilme) {
+
     remover_indice_genero(idFilme);
     remover_indice_diretor(idFilme);
 }
 
 void fechar_indices() {
-    if (arquivo_indice_genero != NULL) {
-        fclose(arquivo_indice_genero);
-        arquivo_indice_genero = NULL;
-    }
-    
-    if (arquivo_indice_diretor != NULL) {
-        fclose(arquivo_indice_diretor);
-        arquivo_indice_diretor = NULL;
-    }
+
+    if(indice_genero) fclose(indice_genero);
+    if(lista_genero) fclose(lista_genero);
+
+    if(indice_diretor) fclose(indice_diretor);
+    if(lista_diretor) fclose(lista_diretor);
+
+    indice_genero = NULL;
+    lista_genero = NULL;
+
+    indice_diretor = NULL;
+    lista_diretor = NULL;
 }
