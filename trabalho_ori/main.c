@@ -144,7 +144,7 @@ int main() {
                 fgets(genero, 60, stdin);
                 limpar_linha(genero);
                 
-                buscar_por_genero(arq, genero);
+                buscar_por_genero(arq, genero); // <-- Passa o ponteiro ativo
                 break;
             }
             
@@ -155,7 +155,7 @@ int main() {
                 fgets(diretor, 60, stdin);
                 limpar_linha(diretor);
                 
-                buscar_por_diretor(arq, diretor);
+                buscar_por_diretor(arq, diretor); // <-- Passa o ponteiro ativo
                 break;
             }
             
