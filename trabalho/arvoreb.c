@@ -5,7 +5,8 @@
 #define ARQUIVO_ARVORE "arvore_b.dat"
 
 static FILE* arq_arvore = NULL;
-static long offset_raiz = -1; // Guardado no cabeçalho
+static long offset_raiz = -1; // guadando no cabeçalho
+
 
 
 static long alocar_no(NoArvoreB* no);
