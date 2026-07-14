@@ -19,5 +19,5 @@ long buscar_arvore_b(int id);
 void inserir_arvore_b(int id, long offset_dado);
 void remover_arvore_b(int id);
 void fechar_arvore_b();
-
+void visualizar_arvore();
 #endif
