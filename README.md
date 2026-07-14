@@ -4,13 +4,13 @@ Bem-vindo ao sistema de streaming KernelPop!!! Esse projeto é um gerenciador de
 Chega de arrays gigantes comendo toda a sua memória RAM. O sistema lê, escreve e atualiza os bytes direto no arquivo físico .dat
 
 Quais são suas funcionalidades?
-[C]reate: Cadastra seus filmes. 
+Create: Cadastra seus filmes. 
 
-[R]ead: Busca o filme pelo ID. Achou? Ele te mostra tudo: diretor, ano, duração, nota e gênero.
+Read: Busca o filme pelo ID. Achou? Ele te mostra tudo: diretor, ano, duração, nota e gênero.
 
-[U]pdate: Escreveu o nome do diretor errado ou quer mudar a nota? Dá para atualizar o registro. O sistema acha o filme, volta o ponteiro do disco no lugar exato e sobrescreve as informações, forçando a Chave Primária (ID) a continuar a mesma.
+Update: Escreveu o nome do diretor errado ou quer mudar a nota? Dá para atualizar o registro. O sistema acha o filme, volta o ponteiro do disco no lugar exato e sobrescreve as informações, forçando a Chave Primária (ID) a continuar a mesma.
 
-[D]elete (A remoção fantasma): A remoção é lógica. O sistema não apaga os bytes e bagunça o arquivo, ele só liga uma flag (removido = '1'). O filme continua lá no HD, mas o sistema finge que não vê.
+Delete (A remoção fantasma): A remoção é lógica. O sistema não apaga os bytes e bagunça o arquivo, ele só liga uma flag (removido = '1'). O filme continua lá no HD, mas o sistema finge que não vê.
 
 Alguns Detalhes Técnicos
 
