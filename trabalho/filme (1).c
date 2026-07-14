@@ -1,6 +1,6 @@
 #include "filme.h"
 #include "led.h"
-#include "arvoreb.h" //cabeçalho da Árvore B
+#include "arvoreb.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,11 +30,11 @@ void inserir_filme(FILE* arq, Filme f) {
     f.removido = '0';
     f.prox_livre = -1;
     
-    // 1. Obtém o offset disponível usando o módulo da LED
+  
     long offset = led_alocar_espaco(arq);
     
     if (offset == -1) {
-        // Se a LED estiver vazia, insere no final do arquivo
+
         fseek(arq, 0, SEEK_END);
         offset = ftell(arq);
     }
@@ -44,19 +44,18 @@ void inserir_filme(FILE* arq, Filme f) {
     fwrite(&f, sizeof(Filme), 1, arq);
     fflush(arq);
 
-    // 3. NOVO: Insere a Chave Primária (ID) e o Offset na Árvore B
     inserir_arvore_b(f.id, offset); 
 }
 
 Filme buscar_filme(FILE* arq, int id_procurado) {
     Filme f;
-    f.id = -1; // Valor padrão para não encontrado
+    f.id = -1; 
 
-    // 1. NOVO: Busca o offset diretamente na Árvore B em disco
+
     long offset = buscar_arvore_b(id_procurado);
 
     if (offset != -1) {
-        // 2. Se a árvore encontrou, pula direto para o byte exato e lê
+    
         fseek(arq, offset, SEEK_SET);
         if (fread(&f, sizeof(Filme), 1, arq) == 1) {
             // Garante que não é um registro logicamente removido
@@ -93,7 +92,7 @@ int atualizar_filme(FILE* arq, int id_procurado, Filme novos_dados) {
             }
         }
     }
-    return 0; // Filme não encontrado ou já removido
+    return 0;
 }
 
 int remover_filme(FILE* arq, int id_procurado) {
