@@ -59,9 +59,7 @@ static long alocar_no(NoArvoreB* no) {
     return offset;
 }
 
-// ==========================================
-// BUSCA
-// ==========================================
+
 long buscar_arvore_b(int id) {
     if (offset_raiz == -1) return -1; // Árvore vazia
     long offset_atual = offset_raiz;
