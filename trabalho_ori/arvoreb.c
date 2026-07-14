@@ -316,3 +316,39 @@ void fechar_arvore_b() {
         arq_arvore = NULL;
     }
 }
+// Função auxiliar que imprime a árvore hierarquicamente
+static void imprimir_no_recursivo(long offset, int nivel) {
+    if (offset == -1) return;
+    
+    NoArvoreB no;
+    ler_no(offset, &no);
+    
+    // Imprime os espaços para indentação (nível de profundidade)
+    for (int i = 0; i < nivel; i++) {
+        printf("    ");
+    }
+    
+    // Imprime as chaves do nó atual
+    printf("[");
+    for (int i = 0; i < no.num_chaves; i++) {
+        printf("%d", no.chaves[i]);
+        if (i < no.num_chaves - 1) printf(", ");
+    }
+    printf("]\n");
+
+    // Desce para os filhos, se não for folha
+    if (!no.eh_folha) {
+        for (int i = 0; i <= no.num_chaves; i++) {
+            imprimir_no_recursivo(no.filhos[i], nivel + 1);
+        }
+    }
+}
+
+
+void visualizar_arvore() {
+    if (offset_raiz == -1) {
+        printf("A Arvore B esta vazia.\n");
+        return;
+    }
+    imprimir_no_recursivo(offset_raiz, 0);
+}
