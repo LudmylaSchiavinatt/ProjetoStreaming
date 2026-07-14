@@ -20,10 +20,11 @@ void exibir_menu() {
     printf("4. Remover Filme (Delete - Logico)\n");
     printf("5. Buscar por Genero (Indice Secundario)\n");
     printf("6. Buscar por Diretor (Indice Secundario)\n");
-    printf("7. Sair\n");
+    printf("7. Mostrar Espacos Livres (LED)\n");
+    printf("8. Visualizar Arvore B\n");
+    printf("9. Sair\n");
     printf("Escolha:");
 }
-
 int main() {
    
     inicializar_arvore_b();
