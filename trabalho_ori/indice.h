@@ -17,13 +17,13 @@ typedef struct {
 void inicializar_indice_genero();
 void inserir_indice_genero(Filme filme);
 void remover_indice_genero(int idFilme);
-void buscar_por_genero(const char *genero);
+void buscar_por_genero(FILE *dados, const char *genero); 
 
 // Diretor 
 void inicializar_indice_diretor();
 void inserir_indice_diretor(Filme filme);
 void remover_indice_diretor(int idFilme);
-void buscar_por_diretor(const char *diretor);
+void buscar_por_diretor(FILE *dados, const char *diretor); 
 
 // Manutenção 
 void atualizar_indices(Filme antigo, Filme novo);
