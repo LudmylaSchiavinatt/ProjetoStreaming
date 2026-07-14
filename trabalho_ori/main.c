@@ -5,9 +5,9 @@
 #include "indice.h"  
 #include "arvoreb.h"
 
-// auxiliar pra remover /n
+// Remove \n e \r para garantir o correto funcionamento das buscas textuais no Windows
 void limpar_linha(char *str) {
-    str[strcspn(str, "\n")] = '\0';
+    str[strcspn(str, "\r\n")] = '\0';
 }
 
 void exibir_menu() {
@@ -20,11 +20,10 @@ void exibir_menu() {
     printf("4. Remover Filme (Delete - Logico)\n");
     printf("5. Buscar por Genero (Indice Secundario)\n");
     printf("6. Buscar por Diretor (Indice Secundario)\n");
-    printf("7. Mostrar Espacos Livres (LED)\n");
-    printf("8. Visualizar Arvore B\n");
-    printf("9. Sair\n");
+    printf("7. Sair\n");
     printf("Escolha:");
 }
+
 int main() {
    
     inicializar_arvore_b();
@@ -32,11 +31,10 @@ int main() {
     FILE* arq = abrir_arquivo("dados_filmes.dat");
     if (arq == NULL) {
         printf("Erro fatal ao abrir o arquivo de dados.\n");
-        fechar_arvore_b(); // Garante o fechamento correto caso falhe
+        fechar_arvore_b(); 
         return 1;
     }
 
-    //inicializa os indices secundarios
     inicializar_indice_genero();
     inicializar_indice_diretor();
     
@@ -81,7 +79,7 @@ int main() {
                 break;
             }
             
-            case 2: { // leitura do registro
+            case 2: { // READ
                 int id;
                 printf("\nDigite o ID do filme que deseja: ");
                 scanf("%d", &id); getchar();
@@ -139,25 +137,25 @@ int main() {
                 break;
             }
             
-            case 5: {
+            case 5: { // BUSCAR POR GÉNERO
                 char genero[60];
                 printf("\n--- BUSCAR POR GENERO ---\n");
                 printf("Digite o genero: ");
                 fgets(genero, 60, stdin);
                 limpar_linha(genero);
                 
-                buscar_por_genero(genero);
+                buscar_por_genero(arq, genero);
                 break;
             }
             
-            case 6: {
+            case 6: { // BUSCAR POR DIRETOR
                 char diretor[60];
                 printf("\n--- BUSCAR POR DIRETOR ---\n");
                 printf("Digite o nome do diretor: ");
                 fgets(diretor, 60, stdin);
                 limpar_linha(diretor);
                 
-                buscar_por_diretor(diretor);
+                buscar_por_diretor(arq, diretor);
                 break;
             }
             
@@ -170,12 +168,8 @@ int main() {
         }
     }
 
-    //fecha os indice secundarios
     fechar_indices();
-    
-    // <<< 3. FECHE A ÁRVORE B ANTES DE TERMINAR
     fechar_arvore_b();
-
     fechar_arquivo(arq);
     return 0;
 }
